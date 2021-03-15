@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jit.doc.dao.GroupDao">
+    <insert id="addGroup" parameterType="com.jit.doc.po.Group" keyProperty="id" useGeneratedKeys="true">
+        insert into `group`(group_name, group_description, create_user_id, create_username,create_time,is_delete)
+        values (#{groupName},#{groupDescription},#{createUserId},#{createUsername},#{createTime},#{isDelete})
+    </insert>
+    <insert id="addMember" parameterType="com.jit.doc.po.GroupMembers">
+        insert into group_members(user_id, group_id, role_id, join_time)
+        VALUES (#{userId},#{groupId},#{roleId},#{joinTime})
+    </insert>
+    <update id="updateGroupMembers" parameterType="com.jit.doc.po.GroupMembers">
+        update group_members
+        <trim prefix="set" suffixOverrides=",">
+            <if test="roleId!=null">
+                role_id=#{roleId},
+            </if>
+        </trim>
+        where user_id=#{userId} and group_id=#{groupId}
+    </update>
+    <update id="updateGroup">
+        update `group`
+        <trim prefix="set" suffixOverrides=",">
+            <if test="groupName!=null">
+                group_name=#{groupName},
+            </if>
+            <if test="groupDescription!=null">
+                group_description=#{groupDescription},
+            </if>
+            <if test="isDelete!=null">
+                is_delete=#{isDelete},
+            </if>
+        </trim>
+        where id=#{id}
+    </update>
+    <delete id="deleteMembers">
+        delete from group_members
+        <where>
+            group_id=#{groupId} and user_id in
+            <foreach collection="userIds" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+        </where>
+    </delete>
+    <delete id="deleteMember">
+        delete from group_members
+        where user_id=#{userId} and group_id=#{groupId}
+    </delete>
+    <select id="queryGroups" resultType="com.jit.doc.po.Group" parameterType="java.util.Map">
+        select * from `group`
+        <where>
+            is_delete='0'
+            <if test="id!=null">
+                and id=#{id}
+            </if>
+            <if test="groupName!=null">
+                and group_name=#{groupName}
+            </if>
+            <if test="createUserId!=null">
+                and create_user_id=#{createUserId}
+            </if>
+            <if test="groupDescription!=null">
+                and group_description=#{groupDescription}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+    <select id="queryMember" resultType="com.jit.doc.po.GroupMembers">
+        select * from group_members
+        where group_id=#{groupId} and user_id=#{userId}
+    </select>
+    <select id="queryJoinGroupsByUserId" resultType="com.jit.doc.po.Group">
+        select `group`.* from group_members as gm
+        left join `group`
+        on group.id=gm.group_id
+        where gm.user_id=#{userId} and `group`.create_user_id&lt;&gt;#{userId} and is_delete='0'
+        order by create_time desc
+    </select>
+    <select id="queryAllGroups" resultType="com.jit.doc.po.Group">
+        select `group`.* from group_members as gm
+        left join `group`
+        on group.id=gm.group_id
+        where gm.user_id=#{userId} and is_delete='0'
+        order by create_time desc
+    </select>
+</mapper>

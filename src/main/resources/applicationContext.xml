@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx" xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <context:property-placeholder location="classpath:mail.properties"/>
+    <context:component-scan base-package="com.jit.doc.services"/>
+    <context:component-scan base-package="com.jit.doc.common"/>
+    <!--数据源-->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!--事务管理-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <!--sqlSession工厂-->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis.xml"/>
+    </bean>
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.jit.doc.dao"/>
+    </bean>
+    <!--类转换json-->
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <list >
+                <ref bean="mappingJacksonHttpMessageConverter" />
+            </list>
+        </property>
+    </bean>
+    <bean id="mappingJacksonHttpMessageConverter"
+          class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+        <property name="supportedMediaTypes">
+            <list>
+                <value>text/html;charset=UTF-8</value>
+            </list>
+        </property>
+    </bean><!--文件上传配置-->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" />
+    <!--javaMailSender-->
+    <!--<bean id="javaMailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="host" value="smtp.qq.com"/>
+        <property name="port" value="25"/>
+        <property name="username" value="18861906711@qq.com"/>
+        <property name="password" value="dykkbdyeotvsdchb"/>
+        <property name="defaultEncoding" value="UTF-8" />
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">true</prop>
+                <prop key="mail.smtp.starttls.enable">true</prop>
+                <prop key="mail.debug">true</prop>
+            </props>
+        </property>
+    </bean>-->
+    <bean id="javaMailSender"
+          class="org.springframework.mail.javamail.JavaMailSenderImpl">
+        <property name="protocol" value="smtp"/>
+        <property name="host" value="smtp.163.com"/>
+        <property name="port" value="25"/>
+        <property name="username" value="18861906711@163.com"/>
+        <property name="password" value="1442866228wang"/>
+        <property name="defaultEncoding" value="UTF-8"></property>
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.auth">true</prop>
+                <prop key="mail.smtp.timeout">25000</prop>
+            </props>
+        </property>
+
+    </bean>
+
+    <bean id="simpleMailMessage" class="org.springframework.mail.SimpleMailMessage">
+        <!-- 发件人email -->
+        <property name="from" value="18861906711@163.com" />
+    </bean>
+    <!--开启异步注解@Async-->
+    <task:annotation-driven executor="targetExecutor" scheduler="targetScheduler"/>
+
+    <task:executor id="targetExecutor" pool-size="5"/>
+    <task:scheduler id="targetScheduler" pool-size="10"/>
+</beans>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jit.doc.dao.DocumentDao">
+    <insert id="addDocument" parameterType="com.jit.doc.po.Document" useGeneratedKeys="true" keyProperty="id">
+        insert into document(id,doc_name, doc_size, doc_content, doc_location, group_id, create_user_id,create_username, create_time, update_time, is_delete,recent_update_user_id,recent_update_username)
+        values(#{id},#{docName},#{docSize},#{docContent},#{docLocation},#{groupId},#{createUserId},#{createUsername},#{createTime},#{updateTime},#{isDelete},#{recentUpdateUserId},#{recentUpdateUsername});
+    </insert>
+    <update id="editDocument">
+        update document
+        <trim prefix="set" suffixOverrides=",">
+            <if test="docName!=null">
+                doc_name=#{docName},
+            </if>
+            <if test="docLocation!=null">
+                doc_location=#{docLocation},
+            </if>
+            <if test="docSize!=null">
+                doc_size=#{docSize},
+            </if>
+            <if test="docContent!=null">
+                doc_content=#{docContent},
+            </if>
+            <if test="updateTime!=null">
+                update_time=#{updateTime},
+            </if>
+            <if test="isDelete!=null">
+                is_delete=#{isDelete},
+            </if>
+            <if test="recentUpdateUserId!=null">
+                recent_update_user_id=#{recentUpdateUserId},
+            </if>
+            <if test="recentUpdateUsername!=null">
+                recent_update_username=#{recentUpdateUsername},
+            </if>
+        </trim>
+        where id=#{id}
+    </update>
+    <delete id="deleteDocumentById" parameterType="java.util.List">
+        update document
+        set is_delete="1" , delete_time=now()
+        where id in
+        <foreach collection="list" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="queryDocument" resultType="com.jit.doc.po.Document" parameterType="java.lang.Integer">
+        select * from document where id=#{id}
+    </select>
+    <select id="queryDocumentByUserId" resultType="com.jit.doc.po.Document">
+        select * from document
+        where create_user_id=#{userId} and is_delete='0' and group_id is null and doc_name like "%"#{docName}"%"
+        order by document.update_time desc,create_time desc
+    </select>
+    <select id="queryDeletedDocumentByUserId" resultType="com.jit.doc.po.Document" parameterType="java.lang.Integer">
+        select * from document
+        <where>
+            create_user_id=#{userId} and is_delete='1' and group_id is null
+            <if test="docName!=null">
+                and doc_name like "%"#{docName}"%"
+            </if>
+        </where>
+        order by document.delete_time desc,document.update_time desc
+    </select>
+    <select id="queryDocumentByDocIds" resultType="com.jit.doc.po.Document">
+        select * from document
+        where id in
+        <foreach collection="list" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach> and is_delete='0'
+    </select>
+    <select id="queryDocumentsByGroupId" resultType="com.jit.doc.po.Document">
+        select * from document
+        where group_id=#{groupId} and is_delete='0'
+        order by update_time desc,create_time desc
+    </select>
+    <select id="queryAllDocuments" resultType="com.jit.doc.po.Document">
+        select * from document
+        where group_id is not null and is_delete='0'
+    </select>
+
+    <select id="queryDeletedDocumentsByDocIds" resultType="com.jit.doc.po.Document">
+        select * from document
+        where id in
+        <foreach collection="list" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach> and is_delete='1'
+    </select>
+    <update id="restoreDocByIds" parameterType="java.util.List">
+        update document
+        set is_delete="0"
+        where id in
+        <foreach collection="list" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </update>
+    <delete id="thoroughDeleteDocumentsByIds" parameterType="java.util.List">
+        delete from document
+        where id in
+        <foreach collection="list" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>
